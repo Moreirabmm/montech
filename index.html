@@ -47,14 +47,16 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px
 a{color:inherit}
 :focus-visible{outline:2px solid var(--lime);outline-offset:3px;border-radius:6px}
 
-#ceiling{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#ceiling,#ceil-fade{position:fixed;top:0;left:0;width:100%;height:70vh;z-index:0;pointer-events:none}
+#ceiling{background:linear-gradient(rgba(163,230,53,.05),rgba(0,0,0,0) 71.4%)}
+#ceil-fade{background:linear-gradient(rgba(11,12,11,0) 25.7%,rgba(11,12,11,.94) 88.6%)}
 .wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px;display:flex;flex-direction:column;gap:22px}
 
 /* hero */
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:18px}
 .badge{width:104px;height:104px;border-radius:50%;background:#000;display:grid;place-items:center;position:relative;box-shadow:0 0 0 2px var(--lime),0 0 40px -6px var(--lime)}
 .badge img{width:62px;height:auto;border-radius:10px;display:block}
-.badge::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--lime) 55%,transparent);animation:spin 26s linear infinite}
+.badge::after{will-change:transform;content:"";position:absolute;inset:-7px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--lime) 55%,transparent);animation:spin 26s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 h1{font-family:var(--display);font-weight:900;font-size:clamp(44px,13vw,64px);line-height:.88;margin:0;letter-spacing:.01em;text-transform:uppercase}
 h1 em{font-style:normal;color:var(--on-lime);background:var(--lime);padding:0 .12em;margin-left:.04em;display:inline-block;transform:skewX(-8deg)}
@@ -83,7 +85,7 @@ h1 em span{display:inline-block;transform:skewX(8deg)}
 .arrow{width:46px;height:46px;flex:none;border-radius:12px;background:var(--on-lime);color:var(--lime);display:grid;place-items:center}
 
 /* whatsapp block */
-.card{background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.card{background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;}
 .card-head{display:flex;align-items:center;gap:12px}
 .wa-ico{width:40px;height:40px;border-radius:11px;background:var(--wa);display:grid;place-items:center;flex:none;color:#fff}
 .card-head div{flex:1;min-width:0}
@@ -173,7 +175,7 @@ h1 em span{animation:fadein .3s ease both 1.75s}
 .cta:active{transform:translateY(0) scale(.98)}
 /* luz que segue o dedo/mouse nos cards */
 .glow{position:relative;overflow:hidden}
-.glow::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(180px circle at var(--mx,50%) var(--my,50%),rgba(163,230,53,.14),transparent 70%)}
+.glow::before{contain:strict;content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(180px circle at var(--mx,50%) var(--my,50%),rgba(163,230,53,.14),transparent 70%)}
 .glow:hover::before,.glow.touch::before{opacity:1}
 .glow>*{position:relative}
 /* intenções: seta desliza */
@@ -188,7 +190,7 @@ h1 em span{animation:fadein .3s ease both 1.75s}
 @keyframes inl{from{transform:translateX(18px);opacity:0}}
 @keyframes inr{from{transform:translateX(-18px);opacity:0}}
 /* foto: zoom lento conforme rola */
-.inside img{transform:scale(var(--z,1.12));transition:transform .1s linear;will-change:transform}
+.inside img{transform:scale(var(--z,1.12));will-change:transform}
 .chip{transition:transform .5s cubic-bezier(.2,.9,.3,1.3),opacity .5s;transition-delay:calc(var(--c)*80ms)}
 .inside.pre .chip{transform:translateY(10px);opacity:0}
 .inside-cap h3{transition:transform .8s cubic-bezier(.2,.8,.2,1),opacity .8s}
@@ -212,6 +214,7 @@ h1 em span{animation:fadein .3s ease both 1.75s}
 
 
 <canvas id="ceiling" aria-hidden="true"></canvas>
+<div id="ceil-fade" aria-hidden="true"></div>
 
 <main class="wrap">
   <header class="hero">
@@ -357,7 +360,7 @@ const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 $("word").innerHTML=[..."Montech"].map((c,i)=>`<span class="ch" style="--i:${i}">${c}</span>`).join("");
 /* luz que segue o ponteiro */
 document.querySelectorAll(".glow,.cta").forEach(el=>{
-  const mv=e=>{const r=el.getBoundingClientRect();el.style.setProperty("--mx",(e.clientX-r.left)+"px");el.style.setProperty("--my",(e.clientY-r.top)+"px")};
+  let q=null;const mv=e=>{const cx=e.clientX,cy=e.clientY;if(q)return;q=requestAnimationFrame(()=>{q=null;const r=el.getBoundingClientRect();el.style.setProperty("--mx",(cx-r.left)+"px");el.style.setProperty("--my",(cy-r.top)+"px")})};
   el.addEventListener("pointermove",mv);
   el.addEventListener("pointerdown",e=>{mv(e);el.classList.add("touch")});
   el.addEventListener("pointerup",()=>setTimeout(()=>el.classList.remove("touch"),300));
@@ -386,67 +389,64 @@ if(!RM){
   addEventListener("scroll",zr,{passive:true});zr();
 }
 
-/* teto de hexágonos de LED */
+/* teto de hexágonos de LED
+   Cada fileira tem um "sprite" pré-renderizado com o brilho (shadowBlur) uma única vez;
+   a cada quadro só copiamos os sprites com alpha diferente, o que é muito barato. */
 (()=>{
-  const c=$("ceiling"),x=c.getContext("2d");
+  const c=$("ceiling"),x=c.getContext("2d",{alpha:true});
   const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let W,H,dpr,hexes=[],t0=null,booted=false,sy=0;
-  addEventListener('scroll',()=>{sy=scrollY},{passive:true});
+  const FADE_END=.7; /* abaixo disso o teto já está coberto pelo fundo */
+  let W=0,H,CH,dpr,hexes=[],sprites=[],t0=null,booted=false,sy=scrollY;
+  addEventListener("scroll",()=>{sy=scrollY;if(reduce)requestAnimationFrame(()=>draw(0))},{passive:true});
+  function sprite(r,flat){
+    const blur=14,lw=Math.max(1,r*.03),pad=blur*1.6+lw;
+    const w=Math.ceil((2*r+2*pad/dpr)*dpr),h=Math.ceil((2*r*flat+2*pad/dpr)*dpr);
+    const s=document.createElement("canvas");s.width=w;s.height=h;
+    const g=s.getContext("2d");g.translate(w/2,h/2);g.scale(dpr,dpr);
+    g.beginPath();
+    for(let k=0;k<6;k++){const a=Math.PI/3*k,px=Math.cos(a)*r,py=Math.sin(a)*r*flat;k?g.lineTo(px,py):g.moveTo(px,py)}
+    g.closePath();g.lineCap="round";g.lineWidth=lw;
+    g.shadowColor="rgb(220,255,200)";g.shadowBlur=blur;g.strokeStyle="rgb(240,255,232)";g.stroke();
+    return {c:s,w:w/dpr,h:h/dpr};
+  }
   function size(){
-    dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
-    c.width=W*dpr;c.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);
-    hexes=[];
+    dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;CH=Math.ceil(H*FADE_END);
+    c.width=Math.round(W*dpr);c.height=Math.round(CH*dpr);c.style.height=CH+"px";$("ceil-fade").style.height=CH+"px";
+    x.setTransform(dpr,0,0,dpr,0,0);
+    hexes=[];sprites=[];
     const rows=7;
     for(let i=0;i<rows;i++){
       const depth=i/(rows-1); // 0 perto, 1 longe
       const y=40+Math.pow(depth,.8)*H*.42;
       const r=(1-depth*.78)*Math.max(W,420)*.17;
+      const flat=.32+depth*.12;
+      sprites.push(sprite(r,flat));
       const n=Math.ceil(W/(r*1.9))+2;
       for(let j=0;j<n;j++){
         const off=(i%2)*r*.95;
-        hexes.push({x:j*r*1.95-off+(Math.random()-.5)*r*.3,y:y+(Math.random()-.5)*10,r,depth,flat:.32+depth*.12,a:.55-depth*.38,ph:Math.random()*6.28,sp:.4+Math.random()*.8,on:150+depth*650+Math.random()*450,fl:Math.random()*1000});
+        hexes.push({s:i,x:j*r*1.95-off+(Math.random()-.5)*r*.3,y:y+(Math.random()-.5)*10,depth,a:.55-depth*.38,ph:Math.random()*6.28,sp:.4+Math.random()*.8,on:150+depth*650+Math.random()*450,fl:Math.random()*1000});
       }
     }
   }
-  let last=-1e9;
   function draw(t){
-    /* 30 fps bastam para o brilho lento das lâmpadas: metade do custo de CPU */
-    if(!reduce&&t-last<32){requestAnimationFrame(draw);return}
-    last=t;
-    x.clearRect(0,0,W,H);
-    const g=x.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,"rgba(163,230,53,0.05)");g.addColorStop(.5,"rgba(0,0,0,0)");
-    x.fillStyle=g;x.fillRect(0,0,W,H);
-    x.lineCap="round";
+    if(t0===null)t0=t;
+    x.globalAlpha=1;x.clearRect(0,0,W,CH);
+    const e=reduce||booted?1e9:t-t0,ts=t/1000;
     for(const h of hexes){
-      if(t0===null)t0=t;
-      const e=reduce||booted?1e9:t-t0;
-      let boot=1;
       if(e<h.on)continue;
-      if(e<h.on+380){const k=Math.floor((e+h.fl)/55)%4;boot=[.15,1,.05,.7][k]}
-      const flick=reduce?1:.82+.18*Math.sin(t/1000*h.sp+h.ph);
-      const a=h.a*flick*boot;
-      const py0=h.y-sy*.18*(1-h.depth);
-      x.beginPath();
-      for(let k=0;k<6;k++){
-        const ang=Math.PI/3*k;
-        const px=h.x+Math.cos(ang)*h.r, py=py0+Math.sin(ang)*h.r*h.flat;
-        k?x.lineTo(px,py):x.moveTo(px,py);
-      }
-      x.closePath();
-      x.shadowColor="rgba(220,255,200,"+a+")";x.shadowBlur=14;
-      x.strokeStyle="rgba(240,255,232,"+a+")";x.lineWidth=Math.max(1,h.r*.03);
-      x.stroke();
+      let boot=1;
+      if(e<h.on+380)boot=[.15,1,.05,.7][Math.floor((e+h.fl)/55)%4];
+      const flick=reduce?1:.82+.18*Math.sin(ts*h.sp+h.ph);
+      const sp=sprites[h.s];
+      x.globalAlpha=h.a*flick*boot;
+      x.drawImage(sp.c,h.x-sp.w/2,h.y-sy*.18*(1-h.depth)-sp.h/2,sp.w,sp.h);
     }
-    x.shadowBlur=0;
-    if(!booted&&t0!==null&&t-t0>1700)booted=true;
-    const fade=x.createLinearGradient(0,H*.18,0,H*.62);
-    fade.addColorStop(0,"rgba(11,12,11,0)");fade.addColorStop(1,"rgba(11,12,11,0.94)");
-    x.fillStyle=fade;x.fillRect(0,0,W,H);
+    x.globalAlpha=1;
+    if(!booted&&t-t0>1700)booted=true;
     if(!reduce)requestAnimationFrame(draw);
   }
-  addEventListener("resize",()=>{size();if(reduce)draw(0)});
-  if(reduce)addEventListener('scroll',()=>draw(0),{passive:true});
+  /* no celular a barra de endereço muda a altura ao rolar: só refaz o teto se a LARGURA mudar */
+  let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(innerWidth!==W){size();if(reduce)draw(0)}},150)});
   requestAnimationFrame(()=>{size();requestAnimationFrame(draw)});
 })();
 </script>
