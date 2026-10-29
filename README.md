@@ -2,4 +2,4 @@
 
 Link na bio da Montech CT (Barra Mansa e Volta Redonda).
 
-Site estático em um único `index.html`. Para publicar: Settings → Pages → Deploy from branch → `main` / root.
+Site estático: `index.html` + `assets/` (fontes e imagens locais). Deploy no Vercel sem build (Framework: Other).
